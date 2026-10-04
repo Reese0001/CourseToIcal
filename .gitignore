@@ -4,6 +4,13 @@ obj/
 build/
 publish/
 
+# React / Electron build output
+node_modules/
+dist/
+publish-react/
+.vite/
+npm-debug.log*
+
 # Local generated files
 *.exe
 *.dll
