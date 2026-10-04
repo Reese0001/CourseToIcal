@@ -15,10 +15,12 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
+    "@tesseract.js-data/chi_sim": "^1.0.0",
     "antd": "^5.27.2",
     "dayjs": "^1.11.13",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "tesseract.js": "^7.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -38,8 +40,20 @@
   "build": {
     "appId": "com.coursetoical.desktop",
     "productName": "CourseToIcal",
-    "directories": { "output": "publish-react" },
-    "files": ["dist/**/*", "electron/**/*", "package.json"],
-    "win": { "target": ["nsis", "dir"], "signAndEditExecutable": false }
+    "directories": {
+      "output": "publish-react"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "dir"
+      ],
+      "signAndEditExecutable": false
+    }
   }
 }

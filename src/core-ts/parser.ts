@@ -24,6 +24,67 @@ export function parseCsv(input: string, sourceFile = 'courses.csv'): Course[] {
   });
 }
 
+export function parseOcrText(input: string, sourceFile = 'course-screenshot.png'): Course[] {
+  const lines: OcrLine[] = [];
+  let currentDay = 0;
+  for (const rawLine of input.replaceAll('\r', '').split('\n')) {
+    const line = cleanOcrLine(rawLine);
+    if (!line) {
+      lines.push({ text: '', day: currentDay });
+      continue;
+    }
+    const heading = matchOcrDay(line);
+    if (heading) {
+      currentDay = heading.day;
+      if (heading.rest) lines.push({ text: heading.rest, day: currentDay });
+      continue;
+    }
+    lines.push({ text: line, day: currentDay });
+  }
+
+  const output: Course[] = [];
+  const seen = new Set<string>();
+  for (let index = 0; index < lines.length; index += 1) {
+    const weekLine = lines[index];
+    if (!weekLine.day || !isOcrWeekLine(weekLine.text)) continue;
+    const periodIndex = findOcrPeriod(lines, index + 1);
+    if (periodIndex < 0) continue;
+    const teacher = previousOcrValue(lines, index - 1, weekLine.day);
+    const name = previousOcrValue(lines, index - 2, weekLine.day);
+    const room = previousOcrValue(lines, periodIndex - 1, weekLine.day, index + 1);
+    const weeks = parseWeeks(weekLine.text);
+    const period = normalizePeriod(lines[periodIndex].text);
+    if (!name || !weeks.length || !period) continue;
+    const key = `${weekLine.day}|${name}|${period}|${weeks.join(',')}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    output.push({ name, teacher, room, weeks, period, day: weekLine.day, sourceFile, selected: true });
+  }
+  return output;
+}
+
+export function parseOcrTsv(input: string, sourceFile = 'course-screenshot.png'): Course[] {
+  const lines = parseOcrTsvLines(input);
+  const headings = lines
+    .map((line) => ({ ...line, day: parseOcrHeaderDay(line.text) }))
+    .filter((line): line is OcrLayoutLine & { day: number } => Boolean(line.day))
+    .sort((left, right) => left.centerX - right.centerX);
+  if (headings.length < 2) return parseOcrText(lines.map((line) => line.text).join('\n'), sourceFile);
+
+  const uniqueHeadings = headings.filter((heading, index) => index === 0 || heading.day !== headings[index - 1].day);
+  const output: Course[] = [];
+  for (let index = 0; index < uniqueHeadings.length; index += 1) {
+    const heading = uniqueHeadings[index];
+    const left = index === 0 ? -Infinity : (uniqueHeadings[index - 1].centerX + heading.centerX) / 2;
+    const right = index === uniqueHeadings.length - 1 ? Infinity : (heading.centerX + uniqueHeadings[index + 1].centerX) / 2;
+    const columnLines = lines
+      .filter((line) => line.top > heading.bottom && line.centerX > left && line.centerX <= right)
+      .sort((first, second) => first.top - second.top || first.left - second.left);
+    output.push(...parseOcrText([`周${heading.day}`, ...columnLines.map((line) => line.text)].join('\n'), sourceFile));
+  }
+  return dedupeCourses(output);
+}
+
 export function parseWorkbook(bytes: Uint8Array | ArrayBuffer, sourceFile = 'courses.xlsx'): Course[] {
   const workbook = XLSX.read(bytes, { type: 'array', cellText: true, cellDates: false });
   const output: Course[] = [];
@@ -145,7 +206,7 @@ export function clean(value: string): string {
 }
 
 export function parseWeeks(value: string): number[] {
-  const normalized = value.replaceAll('周', '').replaceAll('星期', '').replace('，', ',').replace('、', ',').replaceAll(' ', '');
+  const normalized = value.replaceAll('周', '').replaceAll('星期', '').replaceAll('第', '').replaceAll('[', '').replaceAll(']', '').replaceAll('(', '').replaceAll(')', '').replace('，', ',').replace('、', ',').replaceAll(' ', '');
   const weeks = new Set<number>();
   for (const piece of normalized.split(',')) {
     if (piece.includes('-')) {
@@ -169,10 +230,123 @@ export function normalizePeriod(value: string): string {
 }
 
 export function parseDay(value: string): number {
-  const text = value.trim().replace('星期', '').replace('周', '');
+  const text = value.trim().replace('星期', '').replace('周', '').replace('天', '日');
   const number = Number(text);
   if (Number.isInteger(number) && number >= 1 && number <= 7) return number;
   return ['一', '二', '三', '四', '五', '六', '日'].indexOf(text) + 1;
+}
+
+interface OcrLine { text: string; day: number; }
+
+interface OcrLayoutLine {
+  text: string;
+  left: number;
+  top: number;
+  bottom: number;
+  centerX: number;
+}
+
+function cleanOcrLine(value: string): string {
+  return clean(value)
+    .replaceAll('：', ':')
+    .replaceAll('（', '(')
+    .replaceAll('）', ')')
+    .replaceAll('【', '[')
+    .replaceAll('】', ']')
+    .replaceAll('，', ',')
+    .replaceAll('、', ',')
+    .replaceAll('—', '-')
+    .replaceAll('–', '-')
+    .replaceAll('－', '-')
+    .replaceAll('~', '-')
+    .replace(/([\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])/g, '$1')
+    .trim();
+}
+
+function matchOcrDay(value: string): { day: number; rest: string } | null {
+  const match = value.match(/^\s*(?:星期|周)\s*([一二三四五六日天1-7])\s*(?::|,|-)?\s*(.*)$/);
+  if (!match) return null;
+  const day = parseDay(match[1]);
+  return day ? { day, rest: clean(match[2]) } : null;
+}
+
+function parseOcrHeaderDay(value: string): number {
+  const match = cleanOcrLine(value).replaceAll(' ', '').match(/^(?:星期|周)?([一二三四五六日天1-7])$/);
+  return match ? parseDay(match[1]) : 0;
+}
+
+function parseOcrTsvLines(input: string): OcrLayoutLine[] {
+  const grouped = new Map<string, { words: Array<{ text: string; left: number; top: number; width: number; height: number }>; }>();
+  for (const rawLine of input.replaceAll('\r', '').split('\n').slice(1)) {
+    const fields = rawLine.split('\t');
+    if (fields.length < 12 || fields[0] !== '5') continue;
+    const text = cleanOcrLine(fields.slice(11).join('\t'));
+    if (!text) continue;
+    const left = Number(fields[6]);
+    const top = Number(fields[7]);
+    const width = Number(fields[8]);
+    const height = Number(fields[9]);
+    if (![left, top, width, height].every(Number.isFinite)) continue;
+    const key = fields.slice(1, 5).join(':');
+    const line = grouped.get(key) ?? { words: [] };
+    line.words.push({ text, left, top, width, height });
+    grouped.set(key, line);
+  }
+  return [...grouped.values()].flatMap(({ words }) => {
+    const sorted = words.sort((left, right) => left.left - right.left);
+    const splitGap = 40;
+    const chunks: typeof sorted[] = [];
+    for (const word of sorted) {
+      const current = chunks[chunks.length - 1];
+      const previous = current?.[current.length - 1];
+      if (!current || !previous || word.left - (previous.left + previous.width) > splitGap) chunks.push([word]);
+      else current.push(word);
+    }
+    return chunks.map((chunk) => {
+      const left = Math.min(...chunk.map((word) => word.left));
+      const right = Math.max(...chunk.map((word) => word.left + word.width));
+      const top = Math.min(...chunk.map((word) => word.top));
+      const bottom = Math.max(...chunk.map((word) => word.top + word.height));
+      return { text: chunk.map((word) => word.text).join(' '), left, top, bottom, centerX: (left + right) / 2 };
+    });
+  });
+}
+
+function isOcrWeekLine(value: string): boolean {
+  return /^第?\s*\d{1,2}(?:\s*-\s*\d{1,2})?(?:\s*,\s*\d{1,2})*\s*(?:\[?\s*周(?:次)?\s*\]?|週(?:次)?)\s*$/i.test(value);
+}
+
+function isOcrPeriodLine(value: string): boolean {
+  const normalized = value.replace(/[()[\]]/g, '').replaceAll(' ', '');
+  return /^\d{1,2}(?:-\d{1,2})?(?:节(?:次)?|课时?)?$/i.test(normalized);
+}
+
+function findOcrPeriod(lines: OcrLine[], start: number): number {
+  for (let index = start; index < Math.min(lines.length, start + 5); index += 1) {
+    if (isOcrPeriodLine(lines[index].text)) return index;
+  }
+  return -1;
+}
+
+function previousOcrValue(lines: OcrLine[], start: number, day: number, lowerBound = 0): string {
+  for (let index = start; index >= lowerBound; index -= 1) {
+    if (lines[index].day === day && lines[index].text) return cleanOcrField(lines[index].text);
+  }
+  return '';
+}
+
+function cleanOcrField(value: string): string {
+  return clean(value).replace(/^(?:课程名称|课程|教师|任课教师|教室|地点)\s*[:：]\s*/i, '');
+}
+
+function dedupeCourses(courses: Course[]): Course[] {
+  const seen = new Set<string>();
+  return courses.filter((course) => {
+    const key = `${course.day}|${course.name}|${course.period}|${course.weeks.join(',')}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function normalizeHeader(value: string): string {

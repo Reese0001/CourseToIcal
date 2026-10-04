@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { createWorker } = require('tesseract.js');
 
 const isDev = !app.isPackaged;
 
@@ -33,6 +34,34 @@ ipcMain.handle('files:open', async () => {
     name: path.basename(filePath),
     content: (await fs.readFile(filePath)).toString('base64'),
   })));
+});
+
+ipcMain.handle('files:open-images', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: '课程表图片', extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp'] }],
+  });
+  if (result.canceled) return [];
+
+  const dataPackagePath = require.resolve('@tesseract.js-data/chi_sim');
+  const tesseractPackagePath = path.dirname(require.resolve('tesseract.js'));
+  const corePackagePath = require.resolve('tesseract.js-core', { paths: [tesseractPackagePath] });
+  const worker = await createWorker('chi_sim', 1, {
+    corePath: path.dirname(corePackagePath),
+    langPath: path.join(path.dirname(dataPackagePath), '4.0.0'),
+    gzip: true,
+    cacheMethod: 'none',
+  });
+  try {
+    const files = [];
+    for (const filePath of result.filePaths) {
+      const { data } = await worker.recognize(filePath, {}, { text: true, tsv: true });
+      files.push({ path: filePath, name: path.basename(filePath), text: data.text, tsv: data.tsv || undefined });
+    }
+    return files;
+  } finally {
+    await worker.terminate();
+  }
 });
 
 ipcMain.handle('files:save-text', async (_event, { suggestedName, content }) => {

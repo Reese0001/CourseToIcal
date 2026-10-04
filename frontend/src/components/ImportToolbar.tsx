@@ -1,10 +1,12 @@
-import { CalendarOutlined, ClearOutlined, DownloadOutlined, ExportOutlined, FileExcelOutlined, SettingOutlined } from '@ant-design/icons';
+import { CalendarOutlined, ClearOutlined, DownloadOutlined, ExportOutlined, FileExcelOutlined, FileImageOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, InputNumber, Space, Tooltip, Typography } from 'antd';
 import type { ScheduleConfig } from '../../../src/core-ts/types';
 
 interface Props {
   schedule: ScheduleConfig;
   onImport: () => void;
+  onImageImport: () => void;
+  ocrBusy: boolean;
   onTemplate: () => void;
   onSettings: () => void;
   onClear: () => void;
@@ -12,11 +14,12 @@ interface Props {
   onWeekChange: (week: number) => void;
 }
 
-export default function ImportToolbar({ schedule, onImport, onTemplate, onSettings, onClear, onExport, onWeekChange }: Props) {
+export default function ImportToolbar({ schedule, onImport, onImageImport, ocrBusy, onTemplate, onSettings, onClear, onExport, onWeekChange }: Props) {
   return (
     <div className="toolbar-shell">
       <Space size={8} wrap>
         <Button type="primary" icon={<FileExcelOutlined />} onClick={onImport}>导入课表</Button>
+        <Button icon={<FileImageOutlined />} loading={ocrBusy} onClick={onImageImport}>识别图片</Button>
         <Button icon={<DownloadOutlined />} onClick={onTemplate}>下载模板</Button>
         <Button icon={<SettingOutlined />} onClick={onSettings}>课表设置</Button>
         <Button icon={<ClearOutlined />} onClick={onClear}>清空</Button>
