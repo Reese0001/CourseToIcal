@@ -1,0 +1,25 @@
+# .NET build output
+bin/
+obj/
+build/
+publish/
+
+# Local generated files
+*.exe
+*.dll
+*.pdb
+*.ics
+coursetoical-error.txt
+
+# User-specific legacy files in the original project root
+/CourseToIcal.cs
+/CourseToIcal.csproj
+/CourseToIcalFeatureTests.cs
+
+# IDE and OS files
+.vs/
+.idea/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
