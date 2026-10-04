@@ -6,19 +6,19 @@ namespace CourseToIcal.App.UI
 {
     internal static class UiTheme
     {
-        public static readonly Color Background = Color.FromArgb(240, 253, 250);
+        public static readonly Color Background = Color.FromArgb(245, 247, 250);
         public static readonly Color Surface = Color.White;
-        public static readonly Color SurfaceMuted = Color.FromArgb(232, 241, 244);
-        public static readonly Color Primary = Color.FromArgb(13, 148, 136);
-        public static readonly Color PrimaryHover = Color.FromArgb(20, 184, 166);
-        public static readonly Color Accent = Color.FromArgb(234, 88, 12);
-        public static readonly Color AccentHover = Color.FromArgb(249, 115, 22);
-        public static readonly Color Success = Color.FromArgb(4, 120, 87);
-        public static readonly Color Text = Color.FromArgb(19, 78, 74);
-        public static readonly Color MutedText = Color.FromArgb(71, 85, 105);
-        public static readonly Color Border = Color.FromArgb(153, 246, 228);
-        public static readonly Color Focus = Color.FromArgb(13, 148, 136);
-        public static readonly Color Error = Color.FromArgb(185, 28, 28);
+        public static readonly Color SurfaceMuted = Color.FromArgb(250, 250, 250);
+        public static readonly Color Primary = Color.FromArgb(22, 119, 255);
+        public static readonly Color PrimaryHover = Color.FromArgb(64, 150, 255);
+        public static readonly Color Accent = Color.FromArgb(22, 119, 255);
+        public static readonly Color AccentHover = Color.FromArgb(64, 150, 255);
+        public static readonly Color Success = Color.FromArgb(82, 196, 26);
+        public static readonly Color Text = Color.FromArgb(31, 31, 31);
+        public static readonly Color MutedText = Color.FromArgb(89, 89, 89);
+        public static readonly Color Border = Color.FromArgb(217, 217, 217);
+        public static readonly Color Focus = Color.FromArgb(22, 119, 255);
+        public static readonly Color Error = Color.FromArgb(255, 77, 79);
 
         public static Font BodyFont { get { return new Font("Microsoft YaHei UI", 10F); } }
         public static Font SmallFont { get { return new Font("Microsoft YaHei UI", 9F); } }
@@ -47,7 +47,7 @@ namespace CourseToIcal.App.UI
             else
             {
                 button.BackColor = baseColor;
-                button.ForeColor = Color.Black;
+                button.ForeColor = Color.White;
                 button.FlatAppearance.BorderColor = baseColor;
                 button.FlatAppearance.MouseOverBackColor = hoverColor;
                 button.FlatAppearance.MouseDownBackColor = hoverColor;
@@ -57,7 +57,7 @@ namespace CourseToIcal.App.UI
             button.UseVisualStyleBackColor = false;
             button.Cursor = Cursors.Hand;
             button.Padding = new Padding(12, 4, 12, 4);
-            button.MinimumSize = new Size(0, 40);
+            button.MinimumSize = new Size(0, 38);
             button.Enter += (s, e) => { button.FlatAppearance.BorderColor = Focus; button.FlatAppearance.BorderSize = 2; };
             button.Leave += (s, e) => { button.FlatAppearance.BorderColor = primary ? baseColor : Border; button.FlatAppearance.BorderSize = 1; };
         }

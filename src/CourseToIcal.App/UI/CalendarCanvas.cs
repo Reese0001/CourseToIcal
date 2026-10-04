@@ -79,7 +79,7 @@ namespace CourseToIcal.App.UI
         private static Color ColorFor(string value)
         {
             int hash = Math.Abs((value ?? "").GetHashCode());
-            Color[] palette = { Color.FromArgb(15, 118, 110), Color.FromArgb(17, 94, 89), Color.FromArgb(107, 33, 168), Color.FromArgb(154, 52, 18), Color.FromArgb(21, 94, 117) };
+            Color[] palette = { Color.FromArgb(22, 119, 255), Color.FromArgb(19, 194, 194), Color.FromArgb(82, 196, 26), Color.FromArgb(250, 140, 22), Color.FromArgb(114, 46, 209) };
             return palette[hash % palette.Length];
         }
     }

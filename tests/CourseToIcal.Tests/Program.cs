@@ -69,6 +69,13 @@ namespace CourseToIcal.Tests
             Assert(xlsxCourses[0].Name == "线性代数" && xlsxCourses[0].Teacher == "张老师" && xlsxCourses[0].Room == "教学楼101" && xlsxCourses[0].Period == "01-02" && xlsxCourses[0].Day == 2, ".xlsx 课程字段和星期列");
             Assert(xlsxCourses[0].Weeks.SequenceEqual(new[] { 1, 2, 3 }), ".xlsx 周次解析");
             File.Delete(xlsxPath);
+
+            string templatePath = TempPath("template", ".xlsx");
+            XlsxTemplate.Write(templatePath);
+            List<Course> templateCourses = CourseParser.Parse(templatePath);
+            Assert(templateCourses.Count == 2, "模板工作簿课程行解析");
+            Assert(templateCourses[0].Name == "高等数学" && templateCourses[0].Day == 1 && templateCourses[0].Period == "01-02", "模板字段解析");
+            File.Delete(templatePath);
         }
 
         private static void WriteMinimalWorkbook(string path)

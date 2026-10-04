@@ -7,7 +7,7 @@
 ---
 
 **Project:** CourseToIcal
-**Generated:** 2026-10-04 14:03:09
+**Generated:** 2026-10-04 15:38:00
 **Category:** Productivity Tool
 **Design Dials:** Variance 3/10 (Centered / Minimal) | Motion 2/10 (Subtle) | Density 6/10 (Standard)
 
@@ -19,24 +19,24 @@
 
 | Role | Hex | CSS Variable |
 |------|-----|--------------|
-| Primary | `#0D9488` | `--color-primary` |
-| On Primary | `#000000` | `--color-on-primary` |
-| Secondary | `#14B8A6` | `--color-secondary` |
-| On Secondary | `#0F172A` | `--color-on-secondary` |
-| Accent/CTA | `#EA580C` | `--color-accent` |
-| On Accent/CTA | `#000000` | `--color-on-accent` |
-| Background | `#F0FDFA` | `--color-background` |
-| Foreground | `#134E4A` | `--color-foreground` |
+| Primary | `#1677FF` | `--color-primary` |
+| On Primary | `#FFFFFF` | `--color-on-primary` |
+| Secondary | `#13C2C2` | `--color-secondary` |
+| On Secondary | `#FFFFFF` | `--color-on-secondary` |
+| Accent/CTA | `#1677FF` | `--color-accent` |
+| On Accent/CTA | `#FFFFFF` | `--color-on-accent` |
+| Background | `#F5F7FA` | `--color-background` |
+| Foreground | `#1F1F1F` | `--color-foreground` |
 | Card | `#FFFFFF` | `--color-card` |
-| Card Foreground | `#134E4A` | `--color-card-foreground` |
-| Muted | `#E8F1F4` | `--color-muted` |
-| Muted Foreground | `#475569` | `--color-muted-foreground` |
-| Border | `#99F6E4` | `--color-border` |
-| Destructive | `#DC2626` | `--color-destructive` |
+| Card Foreground | `#1F1F1F` | `--color-card-foreground` |
+| Muted | `#FAFAFA` | `--color-muted` |
+| Muted Foreground | `#595959` | `--color-muted-foreground` |
+| Border | `#D9D9D9` | `--color-border` |
+| Destructive | `#FF4D4F` | `--color-destructive` |
 | On Destructive | `#FFFFFF` | `--color-on-destructive` |
 | Ring | `#0D9488` | `--color-ring` |
 
-**Color Notes:** Teal focus + action orange [Accent adjusted from #F97316]
+**Color Notes:** Ant Design blue action color with neutral enterprise surfaces and semantic green success states.
 
 ### Typography
 
@@ -177,11 +177,11 @@
 
 ### Page Pattern
 
-**Pattern Name:** Product Demo + Features
+**Pattern Name:** Calendar workspace / operations dashboard
 
 - **Conversion Strategy:** Use an interactive demo only when it explains value better than static media. Provide captions, transcript, visible play/pause controls, and a non-video fallback; do not autoplay under reduced motion. Pause media when offscreen or hidden and keep the final product state available as static content.
 - **CTA Placement:** Video center + CTA right/bottom
-- **Section Order:** Hero > Product video/mockup (center) > Feature breakdown per section > Comparison (optional) > CTA
+- **Section Order:** App bar > action toolbar > course filter sidebar + weekly calendar canvas
 
 ---
 
