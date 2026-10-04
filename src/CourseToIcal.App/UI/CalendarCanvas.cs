@@ -20,47 +20,67 @@ namespace CourseToIcal.App.UI
             this.courses = courses;
             this.config = config;
             DoubleBuffered = true;
-            BackColor = Color.White;
+            BackColor = UiTheme.Surface;
+            BorderStyle = BorderStyle.FixedSingle;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            int left = 64;
-            int top = 48;
+            e.Graphics.Clear(UiTheme.Surface);
+            int left = 68;
+            int top = 54;
             int rowHeight = Math.Max(42, (Height - top - 12) / 11);
             int colWidth = Math.Max(80, (Width - left - 8) / 7);
-            using (var gridPen = new Pen(Color.Gainsboro))
-            using (var textBrush = new SolidBrush(Color.FromArgb(55, 55, 55)))
+            DateTime weekStart = config.SemesterStart.Date.AddDays(-(config.WeekStart - 1) + (Week - 1) * 7);
+            using (var gridPen = new Pen(UiTheme.Border))
+            using (var headerBrush = new SolidBrush(UiTheme.SurfaceMuted))
+            using (var textBrush = new SolidBrush(UiTheme.Text))
+            using (var mutedBrush = new SolidBrush(UiTheme.MutedText))
+            using (var headerFont = new Font(UiTheme.BodyFont, FontStyle.Bold))
+            using (var smallFont = UiTheme.SmallFont)
             {
+                e.Graphics.FillRectangle(headerBrush, left, 0, colWidth * 7, top);
                 for (int column = 0; column <= 7; column++) e.Graphics.DrawLine(gridPen, left + column * colWidth, top, left + column * colWidth, top + rowHeight * 11);
                 for (int row = 0; row <= 11; row++) e.Graphics.DrawLine(gridPen, left, top + row * rowHeight, left + colWidth * 7, top + row * rowHeight);
-                DateTime weekStart = config.SemesterStart.Date.AddDays(-(config.WeekStart - 1) + (Week - 1) * 7);
-                for (int day = 0; day < 7; day++) e.Graphics.DrawString(DayNames[day] + "\n" + weekStart.AddDays(day).ToString("MM/dd"), Font, textBrush, left + day * colWidth + 4, 6);
-                for (int row = 0; row < 11; row++) e.Graphics.DrawString((row + 1) + "\n" + config.Periods[row].StartText, Font, textBrush, 4, top + row * rowHeight + 4);
+                for (int day = 0; day < 7; day++)
+                {
+                    DateTime date = weekStart.AddDays(day);
+                    e.Graphics.DrawString(DayNames[day], headerFont, textBrush, left + day * colWidth + 8, 7);
+                    e.Graphics.DrawString(date.ToString("MM/dd"), smallFont, mutedBrush, left + day * colWidth + 8, 28);
+                }
+                for (int row = 0; row < 11; row++)
+                {
+                    e.Graphics.DrawString((row + 1).ToString(), headerFont, textBrush, 14, top + row * rowHeight + 5);
+                    e.Graphics.DrawString(config.Periods[row].StartText, smallFont, mutedBrush, 8, top + row * rowHeight + 25);
+                }
             }
-            DateTime displayedWeekStart = config.SemesterStart.Date.AddDays(-(config.WeekStart - 1) + (Week - 1) * 7);
             foreach (CourseOccurrence occurrence in ScheduleEngine.Expand(courses.Where(c => c.Selected), config, Week))
             {
-                int day = (occurrence.Date - displayedWeekStart).Days;
+                int day = (occurrence.Date - weekStart).Days;
                 if (day < 0 || day > 6) continue;
-                int x = left + day * colWidth + 3;
-                int y = top + (occurrence.FirstPeriod - 1) * rowHeight + 3;
-                int height = (occurrence.LastPeriod - occurrence.FirstPeriod + 1) * rowHeight - 6;
+                int x = left + day * colWidth + 4;
+                int y = top + (occurrence.FirstPeriod - 1) * rowHeight + 4;
+                int height = (occurrence.LastPeriod - occurrence.FirstPeriod + 1) * rowHeight - 8;
                 using (var brush = new SolidBrush(ColorFor(occurrence.Course.Name)))
                 using (var textBrush = new SolidBrush(Color.White))
+                using (var boldFont = new Font(UiTheme.SmallFont, FontStyle.Bold))
+                using (var smallFont = new Font("Microsoft YaHei UI", 8.5F))
                 {
-                    e.Graphics.FillRectangle(brush, x, y, colWidth - 6, height);
-                    string label = occurrence.Course.Name + "\n@" + occurrence.Course.Room;
-                    e.Graphics.DrawString(label, Font, textBrush, new RectangleF(x + 5, y + 5, colWidth - 16, height - 10));
+                    e.Graphics.FillRectangle(brush, x, y, colWidth - 8, height);
+                    string title = occurrence.Course.Name ?? "未命名课程";
+                    string room = string.IsNullOrWhiteSpace(occurrence.Course.Room) ? "无教室" : occurrence.Course.Room;
+                    e.Graphics.DrawString(title, boldFont, textBrush, new RectangleF(x + 7, y + 6, colWidth - 20, Math.Max(20, height - 28)));
+                    e.Graphics.DrawString(room, smallFont, textBrush, new RectangleF(x + 7, y + height - 22, colWidth - 20, 17));
                 }
             }
         }
 
         private static Color ColorFor(string value)
         {
-            int hash = (value ?? "").GetHashCode();
-            return Color.FromArgb(210, 80 + Math.Abs(hash % 130), 80 + Math.Abs((hash / 7) % 120), 120 + Math.Abs((hash / 13) % 100));
+            int hash = Math.Abs((value ?? "").GetHashCode());
+            Color[] palette = { Color.FromArgb(15, 118, 110), Color.FromArgb(17, 94, 89), Color.FromArgb(107, 33, 168), Color.FromArgb(154, 52, 18), Color.FromArgb(21, 94, 117) };
+            return palette[hash % palette.Length];
         }
     }
 }
